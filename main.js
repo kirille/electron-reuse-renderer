@@ -2,18 +2,48 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 
+
+app.commandLine.appendSwitch('--enable-logging');
+app.commandLine.appendSwitch('--log-level', 0);
+
+//
+// coment out next line to make executeJS work
+app.allowRendererProcessReuse = false;
+
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      nativeWindowOpen: true
     }
   })
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
+
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.on('new-window', ( event, url, frameName, disposition, options, additionalFeatures, referrer, postBody ) => {
+
+      let webContents = options.webContents;
+      
+      webContents?.once('dom-ready', () => {
+          let bw = BrowserWindow.fromWebContents( webContents );
+          if ( !bw ) {
+              return;
+          }
+          bw.webContents.openDevTools();
+
+          setTimeout(() => {
+            bw.webContents.executeJavaScript('console.log("Log from Main Proc")', false).then((result) => {
+              console.log(result);
+            });
+          }, 5000);
+      });
+  } );
+  })
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
