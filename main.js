@@ -45,6 +45,20 @@ function createWindow () {
   } );
   })
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.endsWith('/index-second.html')) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          webPreferences: {
+            sandbox: true
+          }
+        }
+      }
+    }
+    return { action: 'allow' }
+  });
+
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
 }
